@@ -1,0 +1,1 @@
+SELECT * FROM clients WHERE client_id = (SELECT MAX(client_id) FROM clients);

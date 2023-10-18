@@ -1,0 +1,1 @@
+INSERT INTO clients(client_name) VALUES (?);
