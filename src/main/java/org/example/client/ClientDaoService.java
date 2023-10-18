@@ -14,9 +14,11 @@ public class ClientDaoService {
     private static final String DELETE_WHERE_ID_SQL =  "./src/main/resources/sql/query/client/delete_client.sql";
     private static final String UPDATE_NAME_WHERE_ID_SQL =  "./src/main/resources/sql/query/client/update_name_where_id.sql";
     private static final String GET_MAX_ID_SQL = "./src/main/resources/sql/query/client/get_by_max_id.sql";
+    private static final String GET_ALL_SQL = "./src/main/resources/sql/query/client/get_all_clients.sql";
 
     private final Database DB;
     private PreparedStatement CREATE_ST;
+    private PreparedStatement GET_ALL_ST;
     private PreparedStatement GET_BY_ID_ST;
     private PreparedStatement GET_MAX_ID_ST;
     private PreparedStatement GET_BY_NAME_ST;
@@ -53,6 +55,9 @@ public class ClientDaoService {
             sql = Files.readString(Path.of(UPDATE_NAME_WHERE_ID_SQL));
             UPDATE_NAME_WHERE_ID_ST = DB.getPreparedStatement(sql);
 
+            sql = Files.readString(Path.of(GET_ALL_SQL));
+            GET_ALL_ST = DB.getPreparedStatement(sql);
+
         }catch (IOException ex){
             ex.printStackTrace();
         }
@@ -62,7 +67,7 @@ public class ClientDaoService {
             CREATE_ST.setString(1,name);
             CREATE_ST.executeUpdate();
 
-            ResultSet rs = GET_MAX_ID_ST.executeQuery();
+            ResultSet rs = CREATE_ST.executeQuery();
             if (rs.next()){
                 return rs.getLong("client_id");
             }
@@ -84,6 +89,20 @@ public class ClientDaoService {
             e.printStackTrace();
         }
         return null;
+    }
+    public List<Client> getAll(){
+         List<Client> clients = new ArrayList<>();
+        try{
+            ResultSet rs = GET_ALL_ST.executeQuery();
+            while (rs.next()){
+                long clientId = rs.getLong("client_id");
+                String clientName = rs.getString("client_name");
+                clients.add(new Client(clientId, clientName));
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+        return clients;
     }
     public Client getByID(long id){
         try{
@@ -137,6 +156,9 @@ public class ClientDaoService {
         return false;
     }
 
-
+    public static void main(String[] args) {
+        ClientDaoService daoService = new ClientDaoService(Database.getDefaultDB());
+        System.out.println(daoService.getAll());
+    }
 
 }
