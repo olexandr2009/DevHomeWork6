@@ -17,6 +17,7 @@ public class ClientDaoService {
     private static final String GET_ALL_SQL = "./src/main/resources/sql/query/client/get_all_clients.sql";
 
     private final Database DB;
+    private final Connection connection;
     private PreparedStatement CREATE_ST;
     private PreparedStatement GET_ALL_ST;
     private PreparedStatement GET_BY_ID_ST;
@@ -30,6 +31,7 @@ public class ClientDaoService {
             throw new NullPointerException("database shouldn't be null");
         }
         DB = database;
+        connection = DB.getConnection();
 
        initStatementsFromFiles();
 
@@ -63,16 +65,20 @@ public class ClientDaoService {
         }
     }
     public long createClient(String name){
-        try{
+        try {
+            connection.setAutoCommit(false);
             CREATE_ST.setString(1,name);
             CREATE_ST.executeUpdate();
-
-            ResultSet rs = CREATE_ST.executeQuery();
+            ResultSet rs = GET_MAX_ID_ST.executeQuery();
             if (rs.next()){
                 return rs.getLong("client_id");
             }
-        }catch (SQLException e){
-            e.printStackTrace();
+        } catch (Exception e) {
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
         }
         return -1;
     }
@@ -155,10 +161,4 @@ public class ClientDaoService {
         }
         return false;
     }
-
-    public static void main(String[] args) {
-        ClientDaoService daoService = new ClientDaoService(Database.getDefaultDB());
-        System.out.println(daoService.getAll());
-    }
-
 }
